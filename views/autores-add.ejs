@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Adicionar/Alterar Autor</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+      $(document).ready(function(){
+        // Função para carregar nacionalidades no select
+        function getNacionalidade(selectedId){
+          $.ajax({
+            url:"http://localhost:3000/nacionalidade/listar",
+            type:"GET",
+            dataType: "json",
+            success:function(res){
+              let options = "<option selected disabled>(Informe)</option>";
+              $.each(res.resultado, function(key, value){
+                let selected = value.IdNacionalidade == selectedId ? "selected" : "";
+                options += "<option value='" + value.IdNacionalidade + "' " + selected + ">" + value.NoNacionalidade + "</option>";
+              });
+              $('#IdNacionalidade').html(options);
+            }
+          });
+        }
+
+        // Se for edição, passa o IdNacionalidade selecionado
+        let selectedNacionalidade = <%= resultado && resultado.IdNacionalidade ? resultado.IdNacionalidade : 'null' %>;
+        getNacionalidade(selectedNacionalidade);
+
+        // Captura envio do formulário
+        $("#formAutor").submit(function(e){
+          e.preventDefault(); // Impede envio padrão
+
+          <% if (resultado && resultado.IdAutor) { %>
+            // Alterar (PUT)
+            $.ajax({
+              url:`http://localhost:3000/autores/editar/<%= resultado.IdAutor %>`,
+              type:"PUT",
+              data: {
+                nome: $("#NoAutor").val(),
+                nacionalidade: $("#IdNacionalidade").val()
+              },
+              success:function(){
+                window.location.href = "/autores/listar";
+              },
+              error:function(err){
+                alert("Erro ao alterar: " + err.responseText);
+              }
+            });
+          <% } else { %>
+            // Adicionar (POST)
+            $.ajax({
+              url:`http://localhost:3000/autores/add`,
+              type:"POST",
+              data: {
+                nome: $("#NoAutor").val(),
+                nacionalidade: $("#IdNacionalidade").val()
+              },
+              success:function(){
+                window.location.href = "/autores/listar";
+              },
+              error:function(err){
+                alert("Erro ao adicionar: " + err.responseText);
+              }
+            });
+          <% } %>
+        });
+      });
+    </script>
+  </head>
+
+  <body class="bg-light">
+    <div class="container mt-4">
+      <% if (resultado && resultado.IdAutor) { %>
+        <h1 class="text-center mb-4">Alterar Autor</h1>
+      <% } else { %>
+        <h1 class="text-center mb-4">Adicionar Autor</h1>
+      <% } %>
+
+      <form id="formAutor" class="shadow p-4 bg-white rounded">
+        <!-- Campo Nome do Autor -->
+        <div class="mb-3">
+          <label for="NoAutor" class="form-label">Nome do Autor</label>
+          <input type="text" id="NoAutor" name="nome" class="form-control"
+                 value="<%= resultado ? resultado.NoAutor : '' %>" required>
+        </div>
+
+        <!-- Campo Nacionalidade -->
+        <div class="mb-3">
+          <label for="IdNacionalidade" class="form-label">Nacionalidade</label>
+          <select name="nacionalidade" id="IdNacionalidade" class="form-select form-select-lg"></select>
+        </div>
+
+        <!-- Botões -->
+        <div class="mb-3">
+          <button type="submit" class="btn btn-success">
+            <%= resultado && resultado.IdAutor ? 'Salvar Alterações' : 'Salvar' %>
+          </button>
+          <a href="/autores/listar" class="btn btn-secondary">Voltar</a>
+        </div>
+      </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
